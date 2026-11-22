@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}BloodCircle | Give blood, save lives{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="relative overflow-hidden bg-brand-700">
+  <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{% static 'images/hero.avif' %}');"></div>
+  <div class="absolute inset-0 bg-gradient-to-r from-brand-800/70 via-brand-700/40 to-brand-600/20"></div>
+
+  <div class="relative max-w-6xl mx-auto px-4 py-16 md:py-28 grid md:grid-cols-2 gap-10 items-center">
+    <div>
+      <h1 data-animate class="text-4xl md:text-6xl font-extrabold text-white leading-tight">
+        ONE DROP OF BLOOD, A WHOLE NEW LIFE
+      </h1>
+      <p data-animate class="mt-5 text-lg text-brand-50 max-w-xl">
+        Register as a donor, or find an available donor near you when blood is needed urgently. Everything in one place.
+      </p>
+      <div data-animate class="mt-8 flex flex-wrap gap-4">
+        {% if user.is_authenticated %}
+          <a href="{% url 'request_create' %}" class="px-6 py-3 rounded-full bg-white text-brand-700 font-semibold hover:bg-brand-50 transition">Request blood</a>
+        {% else %}
+          <a href="{% url 'register' %}" class="px-6 py-3 rounded-full bg-white text-brand-700 font-semibold hover:bg-brand-50 transition">Become a donor</a>
+        {% endif %}
+        <a href="{% url 'volunteers' %}" class="px-6 py-3 rounded-full border border-white text-white font-semibold hover:bg-white/10 transition">Find a donor</a>
+      </div>
+    </div>
+
+    <div data-animate class="bg-white rounded-3xl p-6 md:p-8 shadow-xl">
+      <h2 class="text-xl font-bold text-brand-700">Which blood group do you need?</h2>
+      <p class="text-sm text-gray-600 mt-1">Pick a group to see available donors.</p>
+      <div class="mt-5 grid grid-cols-4 gap-3">
+        <a href="{% url 'volunteers' %}?blood_group=A%2B" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">A+</a>
+        <a href="{% url 'volunteers' %}?blood_group=A-" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">A-</a>
+        <a href="{% url 'volunteers' %}?blood_group=B%2B" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">B+</a>
+        <a href="{% url 'volunteers' %}?blood_group=B-" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">B-</a>
+        <a href="{% url 'volunteers' %}?blood_group=AB%2B" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">AB+</a>
+        <a href="{% url 'volunteers' %}?blood_group=AB-" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">AB-</a>
+        <a href="{% url 'volunteers' %}?blood_group=O%2B" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">O+</a>
+        <a href="{% url 'volunteers' %}?blood_group=O-" class="py-4 rounded-2xl bg-brand-50 text-brand-700 font-bold text-center hover:bg-brand-600 hover:text-white transition">O-</a>
+      </div>
+      <div class="mt-6 pt-5 border-t border-brand-100 grid grid-cols-2 text-center">
+        <div><p class="text-3xl font-extrabold text-brand-600">{{ total_donors }}</p><p class="text-sm text-gray-600">Registered donors</p></div>
+        <div><p class="text-3xl font-extrabold text-brand-600">{{ available_donors }}</p><p class="text-sm text-gray-600">Available today</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- URGENT REQUESTS -->
+<section class="max-w-6xl mx-auto px-4 mt-14">
+  <div class="flex items-end justify-between mb-6">
+    <div>
+      <h2 class="text-2xl md:text-3xl font-bold text-brand-700">Blood needed now</h2>
+      <p class="text-gray-600 mt-1">These patients need blood right now. Call if you can help.</p>
+    </div>
+    {% if user.is_authenticated %}
+      <a href="{% url 'request_create' %}" class="text-brand-600 font-medium hover:underline shrink-0">Post a request</a>
+    {% endif %}
+  </div>
+
+  {% if blood_requests %}
+  <div data-stagger class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for r in blood_requests %}
+    <article class="rounded-2xl border border-brand-200 p-5 bg-white">
+      <div class="flex items-start gap-4">
+        <div class="shrink-0 w-14 h-14 rounded-full bg-brand-600 text-white flex items-center justify-center text-lg font-bold">{{ r.blood_group }}</div>
+        <div class="min-w-0">
+          <h3 class="font-semibold">{{ r.patient_name }}</h3>
+          <p class="text-sm text-gray-600">{{ r.hospital }}, {{ r.district }}</p>
+          {% if r.address %}<p class="text-sm text-gray-500">{{ r.address }}</p>{% endif %}
+        </div>
+      </div>
+      <p class="mt-3 text-sm">Needed by <span class="font-medium">{{ r.needed_date|date:"d M Y" }}</span></p>
+      {% if r.note %}<p class="mt-1 text-sm text-gray-600">{{ r.note }}</p>{% endif %}
+      <div class="mt-4 flex items-center justify-between">
+        <a href="tel:{{ r.contact }}" class="px-4 py-2 rounded-full bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition">Call {{ r.contact }}</a>
+        {% if r.requested_by_id == user.id %}
+        <form method="post" action="{% url 'request_close' r.pk %}">{% csrf_token %}
+          <button class="text-sm text-gray-600 hover:text-brand-700 underline">Mark fulfilled</button>
+        </form>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-2xl border border-dashed border-brand-200 p-10 text-center text-gray-600">
+    No open requests right now. If you need blood, log in and post a request.
+  </div>
+  {% endif %}
+</section>
+
+<!-- DONORS -->
+<section class="max-w-6xl mx-auto px-4 mt-20">
+  <div class="text-center">
+    <h2 data-animate class="text-2xl md:text-3xl font-bold text-brand-700">Donors ready to help</h2>
+    <p data-animate class="text-gray-600 mt-2">Recently joined donors who are available to give blood right now.</p>
+  </div>
+
+  {% if featured_donors %}
+  <div data-stagger class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for d in featured_donors %}
+    <a href="{% url 'volunteers' %}?blood_group={{ d.blood_group|urlencode }}" class="flex items-center gap-4 rounded-2xl bg-white border border-gray-200 p-4 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+      <div class="relative shrink-0">
+        <img src="{{ d.photo.url }}" alt="{{ d.name }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-brand-100">
+        <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-green-500"></span>
+      </div>
+      <div class="min-w-0 flex-1">
+        <h3 class="font-semibold text-gray-900 truncate">{{ d.name }}</h3>
+        <p class="mt-0.5 text-sm text-gray-500 truncate">{{ d.address }}, {{ d.district }}</p>
+        <span class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Available</span>
+      </div>
+      <div class="shrink-0 rounded-xl bg-brand-50 border border-brand-100 px-3 py-2 text-center font-bold text-lg leading-none text-brand-700">{{ d.blood_group }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="mt-8 text-center">
+    <a href="{% url 'volunteers' %}" class="inline-block px-6 py-3 rounded-full border border-brand-600 text-brand-600 font-semibold hover:bg-brand-50 transition">See all donors</a>
+  </div>
+  {% else %}
+  <div class="mt-8 rounded-2xl border border-dashed border-brand-200 p-10 text-center text-gray-600">
+    No donors are available right now. Be the first to
+    <a href="{% url 'register' %}" class="text-brand-600 underline">join as a donor</a>.
+  </div>
+  {% endif %}
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="max-w-6xl mx-auto px-4 mt-20">
+  <h2 data-animate class="text-2xl md:text-3xl font-bold text-brand-700 text-center">How it works</h2>
+  <p data-animate class="text-gray-600 text-center mt-2">Three simple steps</p>
+  <div data-stagger class="mt-10 grid md:grid-cols-3 gap-6">
+    <div class="rounded-2xl bg-brand-50 p-7">
+      <div class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold">1</div>
+      <h3 class="mt-4 font-semibold text-lg text-brand-800">Register</h3>
+      <p class="mt-2 text-gray-600 text-sm">Create a donor profile with your name, blood group, location and last donation date.</p>
+    </div>
+    <div class="rounded-2xl bg-brand-50 p-7">
+      <div class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold">2</div>
+      <h3 class="mt-4 font-semibold text-lg text-brand-800">Search or request</h3>
+      <p class="mt-2 text-gray-600 text-sm">Find available donors by blood group and area, or post an urgent request.</p>
+    </div>
+    <div class="rounded-2xl bg-brand-50 p-7">
+      <div class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold">3</div>
+      <h3 class="mt-4 font-semibold text-lg text-brand-800">Connect directly</h3>
+      <p class="mt-2 text-gray-600 text-sm">Call the donor. After donating, update your last donation date in your profile.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPATIBILITY -->
+<section class="bg-brand-50 mt-20 py-16">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 data-animate class="text-2xl md:text-3xl font-bold text-brand-700 text-center">Who can donate to whom</h2>
+    <p data-animate class="text-gray-600 text-center mt-2">Check which groups your blood can help</p>
+    <div data-animate class="mt-8 max-w-3xl mx-auto bg-white rounded-2xl border border-brand-200 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-brand-600 text-white">
+          <tr><th class="text-left px-5 py-3">Donor</th><th class="text-left px-5 py-3">Can donate to</th></tr>
+        </thead>
+        <tbody class="divide-y divide-brand-100">
+          <tr><td class="px-5 py-3 font-bold text-brand-700">O-</td><td class="px-5 py-3">All groups (universal donor)</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">O+</td><td class="px-5 py-3">O+, A+, B+, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">A-</td><td class="px-5 py-3">A-, A+, AB-, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">A+</td><td class="px-5 py-3">A+, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">B-</td><td class="px-5 py-3">B-, B+, AB-, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">B+</td><td class="px-5 py-3">B+, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">AB-</td><td class="px-5 py-3">AB-, AB+</td></tr>
+          <tr><td class="px-5 py-3 font-bold text-brand-700">AB+</td><td class="px-5 py-3">AB+ only (but can receive from all groups)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- WHO CAN DONATE -->
+<section class="max-w-6xl mx-auto px-4 mt-20">
+  <div class="grid md:grid-cols-2 gap-10 items-center">
+    <div data-animate>
+      <h2 class="text-2xl md:text-3xl font-bold text-brand-700">Can you donate blood?</h2>
+      <p class="mt-3 text-gray-600">You can usually donate if you meet these conditions. The final decision is always made by the doctor at the hospital or blood bank.</p>
+      <ul class="mt-5 space-y-3 text-gray-700">
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Aged between 18 and 60</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Weigh at least 50 kg</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>In good health, with no fever or infection</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>At least 3 months since your last donation (4 months for women)</li>
+      </ul>
+    </div>
+    <div data-animate class="rounded-3xl bg-brand-600 text-white p-8 md:p-10">
+      <p class="text-2xl md:text-3xl font-extrabold leading-snug">One donation can help save up to three lives.</p>
+      <p class="mt-4 text-brand-100 text-sm">Donated blood can be separated into components, so a single donation can help more than one patient.</p>
+      {% if not user.is_authenticated %}
+      <a href="{% url 'register' %}" class="inline-block mt-6 px-6 py-3 rounded-full bg-white text-brand-700 font-semibold hover:bg-brand-50 transition">Become a donor</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- DONATION TIPS -->
+<section class="max-w-6xl mx-auto px-4 mt-20">
+  <h2 data-animate class="text-2xl md:text-3xl font-bold text-brand-700 text-center">Donation tips</h2>
+  <p data-animate class="text-gray-600 text-center mt-2">What to do before, during and after you give blood</p>
+
+  <div data-stagger class="mt-10 grid md:grid-cols-3 gap-6">
+
+    <!-- Before -->
+    <article class="rounded-2xl border border-brand-200 overflow-hidden bg-white">
+      <div class="bg-brand-600 text-white px-6 py-4">
+        <h3 class="text-lg font-semibold">Before donation</h3>
+      </div>
+      <ul class="p-6 space-y-3 text-sm text-gray-700">
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Get a full night of sleep (7 to 8 hours).</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Drink plenty of water in the hours before you donate.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Eat a healthy, iron-rich meal 2 to 3 hours earlier. Avoid very fatty food.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Avoid alcohol for 24 hours before.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Wear a top with sleeves that roll up easily, and carry a photo ID.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Skip donating if you have a fever, cold or feel unwell.</li>
+      </ul>
+    </article>
+
+    <!-- During -->
+    <article class="rounded-2xl border border-brand-200 overflow-hidden bg-white">
+      <div class="bg-brand-700 text-white px-6 py-4">
+        <h3 class="text-lg font-semibold">During donation</h3>
+      </div>
+      <ul class="p-6 space-y-3 text-sm text-gray-700">
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>A short health check comes first: your pulse, blood pressure and haemoglobin.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>The blood draw itself takes about 10 minutes. The whole visit is usually under an hour.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Sit back, breathe slowly and keep your arm still.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>A new sterile needle is used for every donor.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Tell the staff right away if you feel dizzy, cold or unwell.</li>
+      </ul>
+    </article>
+
+    <!-- After -->
+    <article class="rounded-2xl border border-brand-200 overflow-hidden bg-white">
+      <div class="bg-brand-800 text-white px-6 py-4">
+        <h3 class="text-lg font-semibold">After donation</h3>
+      </div>
+      <ul class="p-6 space-y-3 text-sm text-gray-700">
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Rest for 10 to 15 minutes and have a snack and a drink before you leave.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Drink extra fluids for the next 24 to 48 hours.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Avoid heavy lifting and hard exercise for the rest of the day.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Keep the bandage on for a few hours. If you feel dizzy, lie down with your feet raised.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Avoid alcohol for 24 hours.</li>
+        <li class="flex gap-3"><span class="mt-2 w-2 h-2 rounded-full bg-brand-600 shrink-0"></span>Update your last donation date in your BloodCircle profile.</li>
+      </ul>
+    </article>
+
+  </div>
+
+  <p class="mt-6 text-center text-xs text-gray-500">This is general guidance. Follow the instructions given by the doctor or staff at your blood bank.</p>
+</section>
+
+<!-- FAQ -->
+<section class="max-w-3xl mx-auto px-4 mt-20">
+  <h2 data-animate class="text-2xl md:text-3xl font-bold text-brand-700 text-center">Frequently asked questions</h2>
+  <div data-stagger class="mt-8 space-y-3">
+    <details class="group rounded-2xl border border-brand-200 p-5">
+      <summary class="cursor-pointer font-semibold flex justify-between items-center list-none">
+        Will I feel weak after donating?
+        <span class="text-brand-600 text-xl group-open:rotate-45 transition">+</span>
+      </summary>
+      <p class="mt-3 text-gray-600 text-sm">A standard donation is safe for healthy adults. Your body replaces the fluid within hours. Drink plenty of water and eat well before and after donating.</p>
+    </details>
+    <details class="group rounded-2xl border border-brand-200 p-5">
+      <summary class="cursor-pointer font-semibold flex justify-between items-center list-none">
+        Why does my profile show "Unavailable" after I donate?
+        <span class="text-brand-600 text-xl group-open:rotate-45 transition">+</span>
+      </summary>
+      <p class="mt-3 text-gray-600 text-sm">Your body needs time to recover. After your last donation you are unavailable for 3 months (4 months for women). When that time ends, you become available again automatically.</p>
+    </details>
+    <details class="group rounded-2xl border border-brand-200 p-5">
+      <summary class="cursor-pointer font-semibold flex justify-between items-center list-none">
+        Can everyone see my phone number?
+        <span class="text-brand-600 text-xl group-open:rotate-45 transition">+</span>
+      </summary>
+      <p class="mt-3 text-gray-600 text-sm">No. Donor phone numbers are only visible to logged-in users, which helps reduce spam.</p>
+    </details>
+    <details class="group rounded-2xl border border-brand-200 p-5">
+      <summary class="cursor-pointer font-semibold flex justify-between items-center list-none">
+        What should I do if I need blood?
+        <span class="text-brand-600 text-xl group-open:rotate-45 transition">+</span>
+      </summary>
+      <p class="mt-3 text-gray-600 text-sm">Log in and click "Request blood", then enter the patient's details. Your request will appear on the home page. You can also open the Volunteer page and call donors in your area directly.</p>
+    </details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="max-w-6xl mx-auto px-4 mt-20">
+  <div data-animate class="rounded-3xl bg-gradient-to-r from-brand-700 to-brand-500 text-white text-center px-6 py-14">
+    <h2 class="text-3xl md:text-4xl font-extrabold">Grow the circle</h2>
+    <p class="mt-3 text-brand-100 max-w-xl mx-auto">Every donor gives a family hope. Add your name today.</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-4">
+      {% if user.is_authenticated %}
+        <a href="{% url 'profile_edit' %}" class="px-6 py-3 rounded-full bg-white text-brand-700 font-semibold hover:bg-brand-50 transition">Update my profile</a>
+      {% else %}
+        <a href="{% url 'register' %}" class="px-6 py-3 rounded-full bg-white text-brand-700 font-semibold hover:bg-brand-50 transition">Become a donor</a>
+      {% endif %}
+      <a href="{% url 'volunteers' %}" class="px-6 py-3 rounded-full border border-white text-white font-semibold hover:bg-white/10 transition">See donors</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
